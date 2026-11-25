@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>てしかが冒険マップ | 弟子屈高校 地域みらい留学ガイド</title>
+  <!-- Google Fonts: ドット絵風と読みやすいゴシック体の組み合わせ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --rpg-bg: rgba(16, 24, 39, 0.92);
+      --rpg-border: #f8fafc;
+      --rpg-accent: #fbbf24;
+      --rpg-blue: #38bdf8;
+      --rpg-green: #4ade80;
+      --rpg-red: #f87171;
+      --rpg-purple: #c084fc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      background-color: #1e3a2f;
+      color: #ffffff;
+    }
+
+    /* 3Dキャンバス */
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      cursor: grab;
+    }
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+
+    /* RPG風ウィンドウ共通スタイル */
+    .rpg-box {
+      background: var(--rpg-bg);
+      border: 3px solid var(--rpg-border);
+      border-radius: 12px;
+      box-shadow: 0 0 0 3px #0f172a, 0 10px 25px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(6px);
+    }
+
+    .rpg-font {
+      font-family: 'DotGothic16', sans-serif;
+      letter-spacing: 0.05em;
+    }
+
+    /* ヘッダーUI */
+    #header-ui {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .title-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      pointer-events: auto;
+      max-width: 650px;
+    }
+
+    .title-bar h1 {
+      font-size: 1.15rem;
+      color: var(--rpg-accent);
+      text-shadow: 2px 2px 0 #000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-bar p {
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+
+    .reset-cam-btn {
+      background: #334155;
+      color: #fff;
+      border: 2px solid #94a3b8;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .reset-cam-btn:hover {
+      background: #475569;
+      border-color: var(--rpg-accent);
+      color: var(--rpg-accent);
+    }
+
+    /* ジャンルフィルター */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    .filter-btn {
+      background: rgba(15, 23, 42, 0.88);
+      color: #e2e8f0;
+      border: 2px solid #64748b;
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+    }
+
+    .filter-btn:hover {
+      transform: translateY(-2px);
+      border-color: #fff;
+    }
+
+    .filter-btn.active {
+      background: var(--rpg-accent);
+      color: #0f172a;
+      border-color: #fff;
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+    }
+
+    /* 3D空間上のフローティングラベル */
+    #labels-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      overflow: hidden;
+    }
+
+    .spot-label {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      background: rgba(15, 23, 42, 0.9);
+      border: 2px solid #fff;
+      border-radius: 8px;
+      padding: 4px 9px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+      pointer-events: auto;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      transition: transform 0.15s, border-color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .spot-label:hover, .spot-label.selected {
+      transform: translate(-50%, -115%) scale(1.08);
+      border-color: var(--rpg-accent);
+      background: #1e293b;
+      z-index: 20;
+    }
+
+    .spot-label::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px 6px 0;
+      border-style: solid;
+      border-color: #fff transparent transparent transparent;
+    }
+
+    /* 操作ガイド（左下） */
+    .controls-hint {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      z-index: 8;
+      padding: 8px 12px;
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      pointer-events: none;
+    }
+
+    /* 詳細モーダル（RPGステータスウィンドウ風） */
+    #detail-modal {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: calc(100% - 40px);
+      max-width: 430px;
+      z-index: 30;
+      padding: 18px;
+      transform: translateY(130%);
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
+    }
+
+    #detail-modal.open {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px dashed #475569;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    .rpg-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: #0f172a;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.3;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: 2px solid #94a3b8;
+      color: #fff;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .close-btn:hover {
+      border-color: var(--rpg-red);
+      color: var(--rpg-red);
+    }
+
+    /* 所要時間ステータス枠 */
+    .access-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+
+    .access-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .access-icon {
+      font-size: 1.3rem;
+    }
+
+    .access-label {
+      font-size: 0.7rem;
+      color: #94a3b8;
+    }
+
+    .access-value {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--rpg-accent);
+    }
+
+    .modal-desc {
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #f1f5f9;
+      margin-bottom: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 10px;
+      border-radius: 8px;
+      border-left: 3px solid var(--rpg-accent);
+    }
+
+    .info-list {
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-youtube {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #ef4444;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 0.9rem;
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid #fca5a5;
+      box-shadow: 0 4px 0 #991b1b;
+      transition: transform 0.1s;
+    }
+    .btn-youtube:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #991b1b;
+    }
+
+    .btn-gmap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #0284c7;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 9px;
+      border-radius: 8px;
+      border: 2px solid #7dd3fc;
+      box-shadow: 0 4px 0 #075985;
+      transition: transform 0.1s;
+    }
+    .btn-gmap:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #075985;
+    }
+
+    @media (max-width: 600px) {
+      #detail-modal {
+        right: 10px;
+        left: 10px;
+        bottom: 10px;
+        width: auto;
+        max-width: none;
+      }
+      .controls-hint {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 3Dマップ描画エリア -->
+  <div id="canvas-container"></div>
+
+  <!-- 3D空間上のピン・ラベル表示エリア -->
+  <div id="labels-container"></div>
+
+  <!-- 上部ナビゲーションUI -->
+  <div id="header-ui">
+    <div class="rpg-box title-bar">
+      <div>
+        <h1 class="rpg-font">⚔️ てしかが冒険マップ</h1>
+        <p>弟子屈高校 地域みらい留学生向け 周辺探索ガイド</p>
+      </div>
+      <button class="reset-cam-btn rpg-font" id="reset-cam">視点リセット</button>
+    </div>
+
+    <!-- ジャンル絞り込みボタン -->
+    <div class="filter-bar" id="filter-bar">
+      <button class="filter-btn active" data-category="all">🗺️ すべて</button>
+      <button class="filter-btn" data-category="base">🏰 拠点（高校）</button>
+      <button class="filter-btn" data-category="food">🍜 ご飯屋さん</button>
+      <button class="filter-btn" data-category="shop">🎒 スーパー</button>
+      <button class="filter-btn" data-category="conv">🏪 コンビニ</button>
+      <button class="filter-btn" data-category="public">🏛️ 役所・駅</button>
+    </div>
+  </div>
+
+  <!-- 操作ヒント -->
+  <div class="rpg-box controls-hint rpg-font">
+    🖱️ ドラッグで回転 / ホイールで拡大縮小 / 建物をクリックで詳細表示
+  </div>
+
+  <!-- RPGステータスウィンドウ風 詳細パネル -->
+  <div id="detail-modal" class="rpg-box">
+    <div class="modal-header">
+      <div>
+        <span id="m-tag" class="rpg-tag rpg-font">【冒険の拠点】</span>
+        <h2 id="m-title" class="modal-title">北海道弟子屈高校</h2>
+      </div>
+      <button class="close-btn" id="close-modal">✕</button>
+    </div>
+
+    <div class="access-box" id="m-access-box">
+      <div class="access-item">
+        <span class="access-icon">🚶</span>
+        <div>
+          <div class="access-label">高校から徒歩</div>
+          <div class="access-value" id="m-walk">約10分</div>
+        </div>
+      </div>
+      <div class="access-item">
+        <span class="access-icon">🚲</span>
+        <div>
+          <div class="access-label">高校から自転車</div>
+          <div class="access-value" id="m-bike">約4分</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="modal-desc" id="m-desc">
+      ここにスポットの説明文が入ります。
+    </p>
+
+    <div class="info-list">
+      <div>🕒 <strong>営業時間：</strong><span id="m-hours">9:00〜18:00</span></div>
+      <div>📍 <strong>住所：</strong><span id="m-address">北海道川上郡弟子屈町...</span></div>
+    </div>
+
+    <div class="action-buttons">
+      <!-- YouTube動画がある時だけ表示されるボタン -->
+      <a id="m-youtube" href="#" target="_blank" rel="noopener noreferrer" class="btn-youtube">
+        ▶ 紹介動画を見る（YouTube）
+      </a>
+      <a id="m-gmap" href="#" target="_blank" rel="noopener noreferrer" class="btn-gmap">
+        🗺️ Googleマップでルートを見る
+      </a>
+    </div>
+  </div>
+
+  <!-- Three.js ライブラリ読み込み -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    /**
+     * =========================================================================
+     * 【編集エリア】スポットデータ一覧
+     * ここを書き換えるだけで、お店の名前・時間・YouTube動画URL・位置を変更できます！
+     *
+     * - category: 'base'(拠点), 'food'(ご飯), 'shop'(スーパー), 'conv'(コンビニ), 'public'(役所・駅)
+     * - x, z: マップ上の座標（-25 〜 +25 の範囲が画面内に収まりやすいです。0, 0 が中心）
+     * - youtubeUrl: YouTubeのURLを入れると「紹介動画を見る」ボタンが出現します。空欄("")なら非表示になります。
+     * =========================================================================
+     */
+    const SPOTS_DATA = [
+      {
+        id: "teshikaga-hs",
+        name: "北海道弟子屈高校",
+        category: "base",
+        rpgRole: "【冒険の拠点】マイホームタウン",
+        icon: "🏫",
+        color: 0xfbbf24, // ゴールド
+        tagColor: "#fbbf24",
+        x: -6,
+        z: 4,
+        walkTime: "スタート地点",
+        bikeTime: "スタート地点",
+        description: "君たちの新たな冒険が始まる拠点！自然豊かな環境で、地域とつながる学びや部活動が待っているぞ。まずはここから町の探索へ出かけよう！",
+        hours: "平日 8:00〜17:00",
+        address: "北海道川上郡弟子屈町美里3丁目4-1",
+        youtubeUrl: "https://www.youtube.com/results?search_query=%E5%BC%9F%E5%AD%90%E5%B1%88%E9%AB%98%E6%A0%A1",
+        gmapUrl: "https://www.google.com/maps/search/?api=1&query=北海道弟子屈高等学校"
+      },
+      {
+        id: "teshikaga-ramen",
+        name: "弟子屈ラーメン 総本店",
+        category: "food",
+        rpgRole: "【酒場・食堂】体力全回復スポット",
+        icon: "🍜",
+        color: 0xf87171, // レッド
+        tagColor: "#f87171",
+        x: -13,
+        z: -5,
+        walkTime: "約18分",
+        bikeTime: "約6分",
+        description: "北海道を代表する人気ラーメン店の総本店！魚介しぼり醤油や濃厚味噌、行者ニンニク餃子など、部活帰りや休日のエネルギー補給に最強の一杯。",
+        hours: "11:00〜20:00（季節変動あり）",
+        address: "北海道川上郡弟子屈町摩周1丁目1-18",
+        youtubeUrl: "https://www.youtube.com/results?search_query=%E5%BC%9F%E5%AD%90%E5%B1%88%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E7%B7%8F%E6%9C%AC%E5%BA%97",
+        gmapUrl: "https://www.google.com/maps/search/?api=1&query=弟子屈ラーメン総本店"
+      },
+      {
+        id: "mashu-cafe",
+        name: "摩周の街角カフェ＆食堂",
+        category: "food",
+        rpgRole: "【憩いの酒場】放課後スポット",
+        icon: "🍔",
+        color: 0xf87171,
+        tagColor: "#f87171",
+        x: 3,
+        z: -3,
+        walkTime: "約12分",
+        bikeTime: "約4分",
+        description: "地元食材を使ったランチやスイーツが楽しめるおしゃれな食堂。友人との作戦会議や、ちょっと一息つきたい放課後にぴったり！",
+        hours: "11:00〜18:00（水曜定休）",
+        address: "北海道川上郡弟子屈町中央エリア",
+        youtubeUrl: "", // 空欄なのでYouTubeボタンは非表示になります
+        gmapUrl: "https://www.google.com/maps/search/?api=1&query=弟子屈町+ランチ"
+      },
+      {
+        id: "fukuhara",
+        name: "フクハラ 弟子屈店",
+        category: "shop",
+        rpgRole: "【道具屋】食料・日用品の調達",
+        icon: "🛒",
+        color: 0x4ade80, // グリーン
+        tagColor: "#4ade80",
+        x: -1,
+        z: 2,
+        walkTime: "約8分",
+        bikeTime: "約3分",
+        description: "高校から一番近い大型スーパー！お弁当、お菓子、ジュース、文房具や日用品まで何でも揃う。下宿生活や寮生活の強い味方。",
+        hours: "9:00〜21:00",
+        address: "北海道川上郡弟子屈町中央2丁目9",
+        youtubeUrl: "",
+        gmapUrl: "https://www.google.com/maps/search/?api=1&query=フクハラ+弟子屈店"
+      },
+      {
+        id: "acoop",
+        name: "Aコープ ましゅう店",
+        category: "shop",
+        rpgRole: "【道具屋】地元新鮮食材",
+        icon: "🍎",
+        color: 0x4ade80,
+        tagColor: "#4ade80",
+        x: 6,
+        z: 5,
+        walkTime: "約15分",
+        bikeTime: "約5分",
+        description: "地元の新鮮な野菜や乳製品が並ぶスーパー。自炊にチャレンジしたい高校生は、ここで北海道ならではの食材をゲットしよう！",
+        hours: "9:30〜20:00",
+        address: "北海道川上郡弟子屈町朝日1丁目",
+        youtubeUrl: "",
+        gmapUrl: "https://www.google.com/maps/search/?api=1&query=Aコープ+ましゅう店"
+      },
+      {
+        id: "seicomart",
+        name: "セイコーマート 弟子屈店",
+        category: "conv",
+        rpgRole: "【セーブポイント】北海道民の魂",
+        icon: "🏪",
+        color: 0x38bdf8, // スカイブルー
+        tagColor: "#38bdf8",
+        x: -3,
+        z: -4,
+        walkTime: "約10分",
+        bikeTime: "約3分",
+        description: "北海道といえばセコマ！店内調理「ホットシェフ」のカツ丼やフライドチキンは絶品。100円台のお惣菜も多く、お小遣いに優しい神スポット。",
+        hours: "6:00〜24:00",
+        address: "北海道川上郡弟子屈町中央エリア",
+        youtubeUrl: "https://www.youtube.com/results?search_query=%E3%82%BB%E3%82%A4%E3%82%B3%E3%83%BC%E3%83%9E%E3%83%BC%E3%83%88+%E3%83%9B%E3%83%83%E3%83%88%E3%82%B7%E3%82%A7%E3%83%95",
+        gmapUrl: "https://www.google.com/maps/search/?api=1&query=セイコーマート+弟子屈"
+      },
+      {
+        id: "seven-eleven",
+        name: "セブン-イレブン 弟子屈中央店",
+        category: "conv",
+        rpgRole: "【セーブポイント】24時間営業",
+        icon: "🏪",
+        color: 0x38bdf8,
+        tagColor: "#38bdf8",
+        x: 2,
+        z: 8,
+        walkTime: "約11分",
+        bikeTime: "約4分",
+        description: "24時間いつでも開いている安心の拠点。ATMやコピー機、ネット通販の受け取りなど、困った時はここに来れば解決！",
+        hours: "24時間営業",
+        address: "北海道川上郡弟子屈町中央エリア",
+        youtubeUrl: "",
+        gmapUrl: "https://www.google.com/maps/search/?api=1&query=セブンイレブン+弟子屈"
+      },
+      {
+        id: "town-hall",
+        name: "弟子屈町役場",
+        category: "public",
+        rpgRole: "【王国のギルド】町の中心機関",
+        icon: "🏛️",
+        color: 0xc084fc, // パープル
+        tagColor: "#c084fc",
+        x: 0,
+        z: -9,
+        walkTime: "約15分",
+        bikeTime: "約5分",
+        description: "弟子屈町の行政の中心。住民票の手続きや、町民向けのサポート窓口がある場所。すぐ近くを流れる釧路川の景色も最高！",
+        hours: "平日 8:45〜17:30",
+        address: "北海道川上郡弟子屈町中央2丁目3-1",
+        youtubeUrl: "https://www.youtube.com/results?search_query=%E5%BC%9F%E5%AD%90%E5%B1%88%E7%94%BA",
+        gmapUrl: "https://www.google.com/maps/search/?api=1&query=弟子屈町役場"
+      },
+      {
+        id: "mashu-station",
+        name: "JR摩周駅＆足湯",
+        category: "public",
+        rpgRole: "【旅の扉】鉄道＆温泉スポット",
+        icon: "🚂",
+        color: 0xc084fc,
+        tagColor: "#c084fc",
+        x: 13,
+        z: 1,
+        walkTime: "約22分",
+        bikeTime: "約7分",
+        description: "釧路や網走方面へ旅立つための玄関口！駅前には無料で入れる「ぽっぽ湯（足湯）」があり、冬でもポカポカ温まれる最高の癒やしスポット。",
+        hours: "駅窓口 7:00〜17:30 / 足湯は日中開放",
+        address: "北海道川上郡弟子屈町朝日1丁目",
+        youtubeUrl: "https://www.youtube.com/results?search_query=%E6%91%A9%E5%91%A8%E9%A7%85+%E8%B6%B3%E6%B9%AF",
+        gmapUrl: "https://www.google.com/maps/search/?api=1&query=摩周駅"
+      }
+    ];
+
+    /**
+     * =========================================================================
+     * 3Dワールドマップの構築（Three.js）
+     * =========================================================================
+     */
+    const container = document.getElementById('canvas-container');
+    const labelsContainer = document.getElementById('labels-container');
+
+    // シーン・カメラ・レンダラー初期化
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb); // 爽やかな青空
+    scene.fog = new THREE.FogExp2(0x87ceeb, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const defaultCamPos = new THREE.Vector3(0, 26, 30);
+    camera.position.copy(defaultCamPos);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    // カメラ操作（OrbitControls）
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.maxPolarAngle = Math.PI / 2.2; // 地面の下に潜らないように制限
+    controls.minDistance = 12;
+    controls.maxDistance = 55;
+    controls.target.set(0, 0, 0);
+
+    // ライティング（太陽光＋環境光）
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfffbeb, 0.85);
+    dirLight.position.set(20, 35, 20);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 100;
+    const d = 30;
+    dirLight.shadow.camera.left = -d;
+    dirLight.shadow.camera.right = d;
+    dirLight.shadow.camera.top = d;
+    dirLight.shadow.camera.bottom = -d;
+    scene.add(dirLight);
+
+    // --- 地形（RPGフィールドの島・大地）の作成 ---
+    const worldGroup = new THREE.Group();
+    scene.add(worldGroup);
+
+    // 緑の大地
+    const groundGeo = new THREE.CylinderGeometry(28, 26, 2, 32);
+    const groundMat = new THREE.MeshLambertMaterial({ color: 0x4ade80 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.position.y = -1;
+    ground.receiveShadow = true;
+    worldGroup.add(ground);
+
+    // 土の断面（RPGのジオラマ感）
+    const dirtGeo = new THREE.CylinderGeometry(26, 23, 2.5, 32);
+    const dirtMat = new THREE.MeshLambertMaterial({ color: 0x92400e });
+    const dirt = new THREE.Mesh(dirtGeo, dirtMat);
+    dirt.position.y = -3.2;
+    worldGroup.add(dirt);
+
+    // 釧路川（マップを横断する美しい川）
+    const riverGeo = new THREE.BoxGeometry(52, 0.15, 3.2);
+    const riverMat = new THREE.MeshLambertMaterial({ color: 0x0ea5e9 });
+    const river = new THREE.Mesh(riverGeo, riverMat);
+    river.position.set(0, 0.05, -2);
+    river.rotation.y = 0.18;
+    river.receiveShadow = true;
+    worldGroup.add(river);
+
+    // 川にかかる木製の橋（2箇所）
+    function createBridge(x, z, rotY) {
+      const bridgeGroup = new THREE.Group();
+      const deckGeo = new THREE.BoxGeometry(2.4, 0.3, 4.2);
+      const woodMat = new THREE.MeshLambertMaterial({ color: 0xb45309 });
+      const deck = new THREE.Mesh(deckGeo, woodMat);
+      deck.position.y = 0.25;
+      deck.castShadow = true;
+      bridgeGroup.add(deck);
+
+      // 手すり
+      const railGeo = new THREE.BoxGeometry(0.2, 0.6, 4.2);
+      const railL = new THREE.Mesh(railGeo, woodMat);
+      railL.position.set(-1.1, 0.5, 0);
+      const railR = new THREE.Mesh(railGeo, woodMat);
+      railR.position.set(1.1, 0.5, 0);
+      bridgeGroup.add(railL, railR);
+
+      bridgeGroup.position.set(x, 0, z);
+      bridgeGroup.rotation.y = rotY;
+      worldGroup.add(bridgeGroup);
+    }
+    createBridge(-4, -1.3, 0.18);
+    createBridge(8, -3.4, 0.18);
+
+    // 道路（高校から各エリアへ伸びる道）
+    function createRoad(x, z, w, d, rotY = 0) {
+      const roadGeo = new THREE.BoxGeometry(w, 0.08, d);
+      const roadMat = new THREE.MeshLambertMaterial({ color: 0xfef3c7 });
+      const road = new THREE.Mesh(roadGeo, roadMat);
+      road.position.set(x, 0.04, z);
+      road.rotation.y = rotY;
+      road.receiveShadow = true;
+      worldGroup.add(road);
+    }
+    createRoad(-2, 3, 18, 1.4, -0.1);
+    createRoad(-3.5, 0, 1.4, 16, 0.18);
+    createRoad(8, -1, 1.4, 12, 0.18);
+
+    // 背景の山々（摩周岳・硫黄山イメージ）
+    function createMountain(x, z, radius, height, hasSteam = false) {
+      const mGroup = new THREE.Group();
+      const coneGeo = new THREE.ConeGeometry(radius, height, 7);
+      const coneMat = new THREE.MeshLambertMaterial({ color: 0x15803d });
+      const cone = new THREE.Mesh(coneGeo, coneMat);
+      cone.position.y = height / 2;
+      cone.castShadow = true;
+      mGroup.add(cone);
+
+      // 山頂の雪化粧
+      const snowGeo = new THREE.ConeGeometry(radius * 0.35, height * 0.35, 7);
+      const snowMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+      const snow = new THREE.Mesh(snowGeo, snowMat);
+      snow.position.y = height * 0.83;
+      mGroup.add(snow);
+
+      mGroup.position.set(x, 0, z);
+      worldGroup.add(mGroup);
+    }
+    createMountain(-18, -16, 5.5, 8);
+    createMountain(-11, -19, 4.5, 6.5);
+    createMountain(16, -15, 6, 9);
+
+    // 木々をランダムに配置して北海道らしさを演出
+    function createTree(x, z) {
+      const tree = new THREE.Group();
+      const trunkGeo = new THREE.CylinderGeometry(0.2, 0.3, 1, 6);
+      const trunkMat = new THREE.MeshLambertMaterial({ color: 0x78350f });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = 0.5;
+      tree.add(trunk);
+
+      const leavesGeo = new THREE.ConeGeometry(1.1, 2.5, 6);
+      const leavesMat = new THREE.MeshLambertMaterial({ color: 0x166534 });
+      const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+      leaves.position.y = 2.0;
+      leaves.castShadow = true;
+      tree.add(leaves);
+
+      tree.position.set(x, 0, z);
+      worldGroup.add(tree);
+    }
+
+    const treeCoords = [
+      [-16, 8], [-18, 2], [-14, 13], [-9, 14], [9, 13], [16, 10],
+      [18, -6], [11, -11], [-7, -12], [-20, -8], [15, 6], [-11, 8]
+    ];
+    treeCoords.forEach(([tx, tz]) => createTree(tx, tz));
+
+    // 温泉の湯気パーティクル（摩周温泉・足湯イメージ）
+    const steams = [];
+    function createSteam(x, z) {
+      const geo = new THREE.SphereGeometry(0.35, 8, 8);
+      const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.65 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, 0.5 + Math.random() * 2, z);
+      mesh.userData = { baseY: 0.5, speed: 0.015 + Math.random() * 0.01, offset: Math.random() * 10 };
+      worldGroup.add(mesh);
+      steams.push(mesh);
+    }
+    for (let i = 0; i < 6; i++) {
+      createSteam(13 + (Math.random() - 0.5), 2.5 + (Math.random() - 0.5));
+      createSteam(-14 + (Math.random() - 0.5), -13 + (Math.random() - 0.5));
+    }
+
+    /**
+     * =========================================================================
+     * スポット（建物＆クリスタルマーカー）の3D生成とHTMLラベル紐付け
+     * =========================================================================
+     */
+    const spotObjects = []; // レイキャスト（クリック判定）用
+    const spotEntries = []; // アニメーション・フィルタリング管理用
+
+    SPOTS_DATA.forEach((spot) => {
+      const group = new THREE.Group();
+      group.position.set(spot.x, 0, spot.z);
+
+      // 建物の土台（光る魔法陣リング）
+      const ringGeo = new THREE.RingGeometry(1.1, 1.4, 24);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: spot.color,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.85
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = 0.06;
+      group.add(ring);
+
+      // 建物本体（カテゴリーに応じて形を変える）
+      let buildingMesh;
+      const bMat = new THREE.MeshLambertMaterial({ color: spot.color });
+
+      if (spot.category === 'base') {
+        // 弟子屈高校（大きめの校舎風）
+        const mainBox = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.6, 1.6), bMat);
+        mainBox.position.y = 0.8;
+        mainBox.castShadow = true;
+        group.add(mainBox);
+
+        const roof = new THREE.Mesh(
+          new THREE.ConeGeometry(2.1, 0.9, 4),
+          new THREE.MeshLambertMaterial({ color: 0xb45309 })
+        );
+        roof.position.y = 2.05;
+        roof.rotation.y = Math.PI / 4;
+        group.add(roof);
+        buildingMesh = mainBox;
+      } else {
+        // ショップ・飲食店・公共施設
+        const box = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.3, 1.7), bMat);
+        box.position.y = 0.65;
+        box.castShadow = true;
+        group.add(box);
+
+        const roof = new THREE.Mesh(
+          new THREE.ConeGeometry(1.4, 0.7, 4),
+          new THREE.MeshLambertMaterial({ color: 0xf8fafc })
+        );
+        roof.position.y = 1.65;
+        roof.rotation.y = Math.PI / 4;
+        group.add(roof);
+        buildingMesh = box;
+      }
+
+      // 頭上に浮かぶRPG風クリスタルマーカー
+      const crystalGeo = new THREE.OctahedronGeometry(0.45, 0);
+      const crystalMat = new THREE.MeshLambertMaterial({
+        color: spot.color,
+        emissive: spot.color,
+        emissiveIntensity: 0.4
+      });
+      const crystal = new THREE.Mesh(crystalGeo, crystalMat);
+      crystal.position.y = spot.category === 'base' ? 3.2 : 2.6;
+      group.add(crystal);
+
+      worldGroup.add(group);
+
+      // クリック判定用にユーザーデータを紐付け
+      group.traverse((child) => {
+        if (child.isMesh) {
+          child.userData = { spotId: spot.id };
+          spotObjects.push(child);
+        }
+      });
+
+      // HTMLフローティングラベル作成
+      const labelEl = document.createElement('div');
+      labelEl.className = 'spot-label';
+      labelEl.innerHTML = `<span>${spot.icon}</span><span>${spot.name}</span>`;
+      labelEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectSpot(spot.id);
+      });
+      labelsContainer.appendChild(labelEl);
+
+      spotEntries.push({
+        data: spot,
+        group: group,
+        crystal: crystal,
+        ring: ring,
+        labelEl: labelEl,
+        visible: true
+      });
+    });
+
+    /**
+     * =========================================================================
+     * インタラクション（クリック判定・詳細モーダル表示・フィルター機能）
+     * =========================================================================
+     */
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let downPos = { x: 0, y: 0 };
+
+    // ドラッグとクリックを区別する
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      downPos = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      const moveDist = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
+      if (moveDist > 6) return; // カメラ回転ドラッグ時はクリック判定しない
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, camera);
+      const intersects = raycaster.intersectObjects(spotObjects);
+
+      if (intersects.length > 0) {
+        const hitSpotId = intersects[0].object.userData.spotId;
+        if (hitSpotId) {
+          selectSpot(hitSpotId);
+        }
+      }
+    });
+
+    // 詳細モーダルを開く関数
+    const modal = document.getElementById('detail-modal');
+    let selectedSpotId = null;
+
+    function selectSpot(spotId) {
+      const entry = spotEntries.find((item) => item.data.id === spotId);
+      if (!entry || !entry.visible) return;
+
+      selectedSpotId = spotId;
+      const d = entry.data;
+
+      // ラベルの選択状態更新
+      spotEntries.forEach((item) => {
+        item.labelEl.classList.toggle('selected', item.data.id === spotId);
+      });
+
+      // モーダル内容をセット
+      const tagEl = document.getElementById('m-tag');
+      tagEl.textContent = d.rpgRole;
+      tagEl.style.backgroundColor = d.tagColor;
+
+      document.getElementById('m-title').textContent = `${d.icon} ${d.name}`;
+      document.getElementById('m-walk').textContent = d.walkTime;
+      document.getElementById('m-bike').textContent = d.bikeTime;
+      document.getElementById('m-desc').textContent = d.description;
+      document.getElementById('m-hours').textContent = d.hours;
+      document.getElementById('m-address').textContent = d.address;
+      document.getElementById('m-gmap').href = d.gmapUrl;
+
+      // YouTubeボタンの表示切り替え
+      const ytBtn = document.getElementById('m-youtube');
+      if (d.youtubeUrl && d.youtubeUrl.trim() !== "") {
+        ytBtn.href = d.youtubeUrl;
+        ytBtn.style.display = 'flex';
+      } else {
+        ytBtn.style.display = 'none';
+      }
+
+      modal.classList.add('open');
+    }
+
+    // モーダルを閉じる
+    document.getElementById('close-modal').addEventListener('click', () => {
+      modal.classList.remove('open');
+      selectedSpotId = null;
+      spotEntries.forEach((item) => item.labelEl.classList.remove('selected'));
+    });
+
+    // 視点リセットボタン
+    document.getElementById('reset-cam').addEventListener('click', () => {
+      camera.position.copy(defaultCamPos);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    });
+
+    // ジャンル絞り込みフィルター
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const cat = btn.dataset.category;
+        spotEntries.forEach((entry) => {
+          const isMatch = cat === 'all' || entry.data.category === cat;
+          entry.visible = isMatch;
+          entry.group.visible = isMatch;
+          entry.labelEl.style.display = isMatch ? 'flex' : 'none';
+        });
+
+        // 選択中のスポットが非表示になったらモーダルを閉じる
+        if (selectedSpotId) {
+          const current = spotEntries.find((i) => i.data.id === selectedSpotId);
+          if (current && !current.visible) {
+            modal.classList.remove('open');
+            selectedSpotId = null;
+          }
+        }
+      });
+    });
+
+    /**
+     * =========================================================================
+     * アニメーションループ＆3D座標→2D画面座標の同期
+     * =========================================================================
+     */
+    const clock = new THREE.Clock();
+    const tempV = new THREE.Vector3();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+
+      // クリスタルマーカーの回転と上下浮遊
+      spotEntries.forEach((entry, idx) => {
+        if (!entry.visible) return;
+        const baseHeight = entry.data.category === 'base' ? 3.2 : 2.6;
+        entry.crystal.rotation.y = elapsed * 2 + idx;
+        entry.crystal.position.y = baseHeight + Math.sin(elapsed * 3 + idx) * 0.18;
+
+        // 選択中は足元の魔法陣を強調
+        if (entry.data.id === selectedSpotId) {
+          const scale = 1.15 + Math.sin(elapsed * 6) * 0.1;
+          entry.ring.scale.set(scale, scale, 1);
+        } else {
+          entry.ring.scale.set(1, 1, 1);
+        }
+
+        // 3D空間上のクリスタル頭上位置を2Dスクリーン座標に変換してラベル追従
+        tempV.set(entry.data.x, baseHeight + 0.7, entry.data.z);
+        tempV.project(camera);
+
+        // カメラの後ろ側に回った場合は非表示
+        if (tempV.z > 1) {
+          entry.labelEl.style.display = 'none';
+        } else {
+          entry.labelEl.style.display = 'flex';
+          const x = (tempV.x * 0.5 + 0.5) * window.innerWidth;
+          const y = (-(tempV.y * 0.5) + 0.5) * window.innerHeight;
+          entry.labelEl.style.left = `${x}px`;
+          entry.labelEl.style.top = `${y}px`;
+        }
+      });
+
+      // 温泉の湯気アニメーション
+      steams.forEach((s) => {
+        s.position.y += s.userData.speed;
+        s.scale.setScalar(1 + Math.sin(elapsed * 2 + s.userData.offset) * 0.2);
+        if (s.position.y > 3.2) {
+          s.position.y = s.userData.baseY;
+        }
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    // ウィンドウリサイズ対応
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // 初回起動時に弟子屈高校を軽く紹介するか、マップ全体を見せる
+    animate();
+  </script>
+</body>
+</html>
