@@ -18,6 +18,7 @@
       --rpg-green: #4ade80;
       --rpg-red: #f87171;
       --rpg-purple: #c084fc;
+      --stamp-gold: #f59e0b;
     }
 
     * {
@@ -68,13 +69,13 @@
     /* ヘッダーUI */
     #header-ui {
       position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
+      top: 12px;
+      left: 12px;
+      right: 12px;
       z-index: 10;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       pointer-events: none;
     }
 
@@ -82,22 +83,23 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 16px;
+      padding: 10px 14px;
       pointer-events: auto;
-      max-width: 650px;
+      max-width: 680px;
+      gap: 10px;
     }
 
     .title-bar h1 {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       color: var(--rpg-accent);
       text-shadow: 2px 2px 0 #000;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .title-bar p {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: #cbd5e1;
       margin-top: 2px;
     }
@@ -120,6 +122,48 @@
       color: var(--rpg-accent);
     }
 
+    /* スタンプラリー進捗バー */
+    .stamp-progress-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      pointer-events: auto;
+      max-width: 680px;
+      gap: 12px;
+      background: rgba(15, 23, 42, 0.94);
+    }
+
+    .stamp-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .stamp-count {
+      color: var(--rpg-accent);
+      font-size: 1rem;
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 12px;
+      background: #1e293b;
+      border: 2px solid #64748b;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #f59e0b, #fde047);
+      transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
     /* ジャンルフィルター */
     .filter-bar {
       display: flex;
@@ -133,13 +177,13 @@
       color: #e2e8f0;
       border: 2px solid #64748b;
       border-radius: 20px;
-      padding: 6px 12px;
-      font-size: 0.8rem;
+      padding: 5px 11px;
+      font-size: 0.78rem;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       transition: all 0.15s;
       box-shadow: 0 3px 6px rgba(0,0,0,0.4);
     }
@@ -182,10 +226,16 @@
       pointer-events: auto;
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-      transition: transform 0.15s, border-color 0.15s;
+      transition: transform 0.15s, border-color 0.15s, background-color 0.2s;
       display: flex;
       align-items: center;
       gap: 4px;
+    }
+
+    /* スタンプ取得済みのラベルスタイル */
+    .spot-label.stamped {
+      border-color: #fbbf24;
+      background: rgba(120, 53, 15, 0.95);
     }
 
     .spot-label:hover, .spot-label.selected {
@@ -206,6 +256,10 @@
       border-color: #fff transparent transparent transparent;
     }
 
+    .spot-label.stamped::after {
+      border-color: #fbbf24 transparent transparent transparent;
+    }
+
     /* 操作ガイド（左下） */
     .controls-hint {
       position: absolute;
@@ -221,12 +275,14 @@
     /* 詳細モーダル（RPGステータスウィンドウ風） */
     #detail-modal {
       position: absolute;
-      bottom: 20px;
-      right: 20px;
-      width: calc(100% - 40px);
+      bottom: 16px;
+      right: 16px;
+      width: calc(100% - 32px);
       max-width: 430px;
+      max-height: 82vh;
+      overflow-y: auto;
       z-index: 30;
-      padding: 18px;
+      padding: 16px;
       transform: translateY(130%);
       opacity: 0;
       transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
@@ -243,7 +299,7 @@
       align-items: flex-start;
       border-bottom: 2px dashed #475569;
       padding-bottom: 10px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .rpg-tag {
@@ -257,7 +313,7 @@
     }
 
     .modal-title {
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: 800;
       color: #fff;
       line-height: 1.3;
@@ -275,10 +331,45 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
     .close-btn:hover {
       border-color: var(--rpg-red);
       color: var(--rpg-red);
+    }
+
+    /* スタンプ押印アクションエリア */
+    .stamp-action-area {
+      margin-bottom: 12px;
+    }
+
+    .btn-stamp {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.95rem;
+      padding: 11px;
+      border-radius: 10px;
+      border: 2px solid #fef08a;
+      box-shadow: 0 4px 0 #92400e;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-stamp:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #92400e;
+    }
+
+    .btn-stamp.stamped {
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-color: #a7f3d0;
+      box-shadow: 0 4px 0 #065f46;
     }
 
     /* 所要時間ステータス枠 */
@@ -289,8 +380,8 @@
       background: rgba(30, 41, 59, 0.85);
       border: 1px solid #475569;
       border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 12px;
+      padding: 9px;
+      margin-bottom: 10px;
     }
 
     .access-item {
@@ -300,35 +391,35 @@
     }
 
     .access-icon {
-      font-size: 1.3rem;
+      font-size: 1.25rem;
     }
 
     .access-label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       color: #94a3b8;
     }
 
     .access-value {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 800;
       color: var(--rpg-accent);
     }
 
     .modal-desc {
-      font-size: 0.88rem;
-      line-height: 1.6;
+      font-size: 0.85rem;
+      line-height: 1.55;
       color: #f1f5f9;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       background: rgba(15, 23, 42, 0.6);
-      padding: 10px;
+      padding: 9px;
       border-radius: 8px;
       border-left: 3px solid var(--rpg-accent);
     }
 
     .info-list {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: #cbd5e1;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -349,8 +440,8 @@
       color: #fff;
       text-decoration: none;
       font-weight: 800;
-      font-size: 0.9rem;
-      padding: 10px;
+      font-size: 0.88rem;
+      padding: 9px;
       border-radius: 8px;
       border: 2px solid #fca5a5;
       box-shadow: 0 4px 0 #991b1b;
@@ -370,8 +461,8 @@
       color: #fff;
       text-decoration: none;
       font-weight: 700;
-      font-size: 0.85rem;
-      padding: 9px;
+      font-size: 0.83rem;
+      padding: 8px;
       border-radius: 8px;
       border: 2px solid #7dd3fc;
       box-shadow: 0 4px 0 #075985;
@@ -380,6 +471,52 @@
     .btn-gmap:active {
       transform: translateY(3px);
       box-shadow: 0 1px 0 #075985;
+    }
+
+    /* スタンプ押印時のポップアップ演出 */
+    #stamp-toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.5);
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.96);
+      border: 4px solid #fbbf24;
+      border-radius: 16px;
+      padding: 20px 28px;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(251, 191, 36, 0.8);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #stamp-toast.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .toast-icon {
+      font-size: 3rem;
+      margin-bottom: 6px;
+      animation: bounce 0.6s ease infinite alternate;
+    }
+
+    .toast-title {
+      font-size: 1.25rem;
+      color: #fbbf24;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .toast-sub {
+      font-size: 0.85rem;
+      color: #f8fafc;
+    }
+
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-6px); }
     }
 
     @media (max-width: 600px) {
@@ -404,6 +541,13 @@
   <!-- 3D空間上のピン・ラベル表示エリア -->
   <div id="labels-container"></div>
 
+  <!-- スタンプ獲得時のポップアップ演出 -->
+  <div id="stamp-toast">
+    <div class="toast-icon" id="toast-icon">💮</div>
+    <div class="toast-title rpg-font" id="toast-title">スタンプ獲得！</div>
+    <div class="toast-sub" id="toast-sub">冒険の記録に刻まれた！</div>
+  </div>
+
   <!-- 上部ナビゲーションUI -->
   <div id="header-ui">
     <div class="rpg-box title-bar">
@@ -414,9 +558,21 @@
       <button class="reset-cam-btn rpg-font" id="reset-cam">視点リセット</button>
     </div>
 
+    <!-- スタンプラリー進捗バー -->
+    <div class="rpg-box stamp-progress-bar">
+      <div class="stamp-info rpg-font">
+        <span>💮 踏破スタンプ：</span>
+        <span class="stamp-count" id="stamp-count-text">0 / 9</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="stamp-progress-fill"></div>
+      </div>
+    </div>
+
     <!-- ジャンル絞り込みボタン -->
     <div class="filter-bar" id="filter-bar">
       <button class="filter-btn active" data-category="all">🗺️ すべて</button>
+      <button class="filter-btn" data-category="stamped">💮 踏破済み</button>
       <button class="filter-btn" data-category="base">🏰 拠点（高校）</button>
       <button class="filter-btn" data-category="food">🍜 ご飯屋さん</button>
       <button class="filter-btn" data-category="shop">🎒 スーパー</button>
@@ -427,7 +583,7 @@
 
   <!-- 操作ヒント -->
   <div class="rpg-box controls-hint rpg-font">
-    🖱️ ドラッグで回転 / ホイールで拡大縮小 / 建物をクリックで詳細表示
+    🖱️ ドラッグで回転 / ホイールで拡大縮小 / 建物をクリックで詳細＆スタンプ押印
   </div>
 
   <!-- RPGステータスウィンドウ風 詳細パネル -->
@@ -438,6 +594,13 @@
         <h2 id="m-title" class="modal-title">北海道弟子屈高校</h2>
       </div>
       <button class="close-btn" id="close-modal">✕</button>
+    </div>
+
+    <!-- スタンプ押印ボタン -->
+    <div class="stamp-action-area">
+      <button id="m-stamp-btn" class="btn-stamp rpg-font">
+        💮 ここに行った！（スタンプを押す）
+      </button>
     </div>
 
     <div class="access-box" id="m-access-box">
@@ -486,10 +649,6 @@
      * =========================================================================
      * 【編集エリア】スポットデータ一覧
      * ここを書き換えるだけで、お店の名前・時間・YouTube動画URL・位置を変更できます！
-     *
-     * - category: 'base'(拠点), 'food'(ご飯), 'shop'(スーパー), 'conv'(コンビニ), 'public'(役所・駅)
-     * - x, z: マップ上の座標（-25 〜 +25 の範囲が画面内に収まりやすいです。0, 0 が中心）
-     * - youtubeUrl: YouTubeのURLを入れると「紹介動画を見る」ボタンが出現します。空欄("")なら非表示になります。
      * =========================================================================
      */
     const SPOTS_DATA = [
@@ -544,7 +703,7 @@
         description: "地元食材を使ったランチやスイーツが楽しめるおしゃれな食堂。友人との作戦会議や、ちょっと一息つきたい放課後にぴったり！",
         hours: "11:00〜18:00（水曜定休）",
         address: "北海道川上郡弟子屈町中央エリア",
-        youtubeUrl: "", // 空欄なのでYouTubeボタンは非表示になります
+        youtubeUrl: "",
         gmapUrl: "https://www.google.com/maps/search/?api=1&query=弟子屈町+ランチ"
       },
       {
@@ -659,15 +818,63 @@
 
     /**
      * =========================================================================
+     * スタンプラリー状態管理（localStorageでブラウザに保存）
+     * =========================================================================
+     */
+    const STORAGE_KEY = 'teshikaga_rpg_stamps_v1';
+    let stampedIds = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+
+    function saveStamps() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stampedIds));
+    }
+
+    function isStamped(spotId) {
+      return stampedIds.includes(spotId);
+    }
+
+    function updateStampProgressUI() {
+      const total = SPOTS_DATA.length;
+      const count = stampedIds.length;
+      document.getElementById('stamp-count-text').textContent = `${count} / ${total}`;
+      const percent = total > 0 ? (count / total) * 100 : 0;
+      document.getElementById('stamp-progress-fill').style.width = `${percent}%`;
+    }
+
+    // スタンプ獲得トースト演出
+    let toastTimer = null;
+    function showStampToast(spotName, isComplete) {
+      const toast = document.getElementById('stamp-toast');
+      const iconEl = document.getElementById('toast-icon');
+      const titleEl = document.getElementById('toast-title');
+      const subEl = document.getElementById('toast-sub');
+
+      if (isComplete) {
+        iconEl.textContent = '👑';
+        titleEl.textContent = '全エリア完全踏破！！';
+        subEl.textContent = '君は立派な弟子屈マスターだ！';
+      } else {
+        iconEl.textContent = '💮';
+        titleEl.textContent = 'スタンプ獲得！';
+        subEl.textContent = `「${spotName}」を踏破した！`;
+      }
+
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2400);
+    }
+
+    /**
+     * =========================================================================
      * 3Dワールドマップの構築（Three.js）
      * =========================================================================
      */
     const container = document.getElementById('canvas-container');
     const labelsContainer = document.getElementById('labels-container');
 
-    // シーン・カメラ・レンダラー初期化
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87ceeb); // 爽やかな青空
+    scene.background = new THREE.Color(0x87ceeb);
     scene.fog = new THREE.FogExp2(0x87ceeb, 0.012);
 
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -681,16 +888,15 @@
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
-    // カメラ操作（OrbitControls）
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    controls.maxPolarAngle = Math.PI / 2.2; // 地面の下に潜らないように制限
+    controls.maxPolarAngle = Math.PI / 2.2;
     controls.minDistance = 12;
     controls.maxDistance = 55;
     controls.target.set(0, 0, 0);
 
-    // ライティング（太陽光＋環境光）
+    // ライティング
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
     scene.add(ambientLight);
 
@@ -712,7 +918,6 @@
     const worldGroup = new THREE.Group();
     scene.add(worldGroup);
 
-    // 緑の大地
     const groundGeo = new THREE.CylinderGeometry(28, 26, 2, 32);
     const groundMat = new THREE.MeshLambertMaterial({ color: 0x4ade80 });
     const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -720,14 +925,13 @@
     ground.receiveShadow = true;
     worldGroup.add(ground);
 
-    // 土の断面（RPGのジオラマ感）
     const dirtGeo = new THREE.CylinderGeometry(26, 23, 2.5, 32);
     const dirtMat = new THREE.MeshLambertMaterial({ color: 0x92400e });
     const dirt = new THREE.Mesh(dirtGeo, dirtMat);
     dirt.position.y = -3.2;
     worldGroup.add(dirt);
 
-    // 釧路川（マップを横断する美しい川）
+    // 釧路川
     const riverGeo = new THREE.BoxGeometry(52, 0.15, 3.2);
     const riverMat = new THREE.MeshLambertMaterial({ color: 0x0ea5e9 });
     const river = new THREE.Mesh(riverGeo, riverMat);
@@ -736,7 +940,7 @@
     river.receiveShadow = true;
     worldGroup.add(river);
 
-    // 川にかかる木製の橋（2箇所）
+    // 橋
     function createBridge(x, z, rotY) {
       const bridgeGroup = new THREE.Group();
       const deckGeo = new THREE.BoxGeometry(2.4, 0.3, 4.2);
@@ -746,7 +950,6 @@
       deck.castShadow = true;
       bridgeGroup.add(deck);
 
-      // 手すり
       const railGeo = new THREE.BoxGeometry(0.2, 0.6, 4.2);
       const railL = new THREE.Mesh(railGeo, woodMat);
       railL.position.set(-1.1, 0.5, 0);
@@ -761,7 +964,7 @@
     createBridge(-4, -1.3, 0.18);
     createBridge(8, -3.4, 0.18);
 
-    // 道路（高校から各エリアへ伸びる道）
+    // 道路
     function createRoad(x, z, w, d, rotY = 0) {
       const roadGeo = new THREE.BoxGeometry(w, 0.08, d);
       const roadMat = new THREE.MeshLambertMaterial({ color: 0xfef3c7 });
@@ -775,8 +978,8 @@
     createRoad(-3.5, 0, 1.4, 16, 0.18);
     createRoad(8, -1, 1.4, 12, 0.18);
 
-    // 背景の山々（摩周岳・硫黄山イメージ）
-    function createMountain(x, z, radius, height, hasSteam = false) {
+    // 山々
+    function createMountain(x, z, radius, height) {
       const mGroup = new THREE.Group();
       const coneGeo = new THREE.ConeGeometry(radius, height, 7);
       const coneMat = new THREE.MeshLambertMaterial({ color: 0x15803d });
@@ -785,7 +988,6 @@
       cone.castShadow = true;
       mGroup.add(cone);
 
-      // 山頂の雪化粧
       const snowGeo = new THREE.ConeGeometry(radius * 0.35, height * 0.35, 7);
       const snowMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
       const snow = new THREE.Mesh(snowGeo, snowMat);
@@ -799,7 +1001,7 @@
     createMountain(-11, -19, 4.5, 6.5);
     createMountain(16, -15, 6, 9);
 
-    // 木々をランダムに配置して北海道らしさを演出
+    // 木々
     function createTree(x, z) {
       const tree = new THREE.Group();
       const trunkGeo = new THREE.CylinderGeometry(0.2, 0.3, 1, 6);
@@ -825,7 +1027,7 @@
     ];
     treeCoords.forEach(([tx, tz]) => createTree(tx, tz));
 
-    // 温泉の湯気パーティクル（摩周温泉・足湯イメージ）
+    // 温泉の湯気
     const steams = [];
     function createSteam(x, z) {
       const geo = new THREE.SphereGeometry(0.35, 8, 8);
@@ -846,14 +1048,21 @@
      * スポット（建物＆クリスタルマーカー）の3D生成とHTMLラベル紐付け
      * =========================================================================
      */
-    const spotObjects = []; // レイキャスト（クリック判定）用
-    const spotEntries = []; // アニメーション・フィルタリング管理用
+    const spotObjects = [];
+    const spotEntries = [];
+
+    function updateLabelAppearance(entry) {
+      const stamped = isStamped(entry.data.id);
+      entry.labelEl.classList.toggle('stamped', stamped);
+      const badge = stamped ? '💮 ' : '';
+      entry.labelEl.innerHTML = `<span>${badge}${entry.data.icon}</span><span>${entry.data.name}</span>`;
+    }
 
     SPOTS_DATA.forEach((spot) => {
       const group = new THREE.Group();
       group.position.set(spot.x, 0, spot.z);
 
-      // 建物の土台（光る魔法陣リング）
+      // 足元の魔法陣リング
       const ringGeo = new THREE.RingGeometry(1.1, 1.4, 24);
       const ringMat = new THREE.MeshBasicMaterial({
         color: spot.color,
@@ -866,12 +1075,10 @@
       ring.position.y = 0.06;
       group.add(ring);
 
-      // 建物本体（カテゴリーに応じて形を変える）
-      let buildingMesh;
+      // 建物本体
       const bMat = new THREE.MeshLambertMaterial({ color: spot.color });
 
       if (spot.category === 'base') {
-        // 弟子屈高校（大きめの校舎風）
         const mainBox = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.6, 1.6), bMat);
         mainBox.position.y = 0.8;
         mainBox.castShadow = true;
@@ -884,9 +1091,7 @@
         roof.position.y = 2.05;
         roof.rotation.y = Math.PI / 4;
         group.add(roof);
-        buildingMesh = mainBox;
       } else {
-        // ショップ・飲食店・公共施設
         const box = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.3, 1.7), bMat);
         box.position.y = 0.65;
         box.castShadow = true;
@@ -899,10 +1104,9 @@
         roof.position.y = 1.65;
         roof.rotation.y = Math.PI / 4;
         group.add(roof);
-        buildingMesh = box;
       }
 
-      // 頭上に浮かぶRPG風クリスタルマーカー
+      // クリスタルマーカー
       const crystalGeo = new THREE.OctahedronGeometry(0.45, 0);
       const crystalMat = new THREE.MeshLambertMaterial({
         color: spot.color,
@@ -915,7 +1119,6 @@
 
       worldGroup.add(group);
 
-      // クリック判定用にユーザーデータを紐付け
       group.traverse((child) => {
         if (child.isMesh) {
           child.userData = { spotId: spot.id };
@@ -926,40 +1129,44 @@
       // HTMLフローティングラベル作成
       const labelEl = document.createElement('div');
       labelEl.className = 'spot-label';
-      labelEl.innerHTML = `<span>${spot.icon}</span><span>${spot.name}</span>`;
       labelEl.addEventListener('click', (e) => {
         e.stopPropagation();
         selectSpot(spot.id);
       });
       labelsContainer.appendChild(labelEl);
 
-      spotEntries.push({
+      const entry = {
         data: spot,
         group: group,
         crystal: crystal,
         ring: ring,
         labelEl: labelEl,
         visible: true
-      });
+      };
+
+      updateLabelAppearance(entry);
+      spotEntries.push(entry);
     });
+
+    // 初回の進捗ゲージ反映
+    updateStampProgressUI();
 
     /**
      * =========================================================================
-     * インタラクション（クリック判定・詳細モーダル表示・フィルター機能）
+     * インタラクション（クリック判定・詳細モーダル表示・スタンプ押印・フィルター）
      * =========================================================================
      */
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     let downPos = { x: 0, y: 0 };
 
-    // ドラッグとクリックを区別する
     renderer.domElement.addEventListener('pointerdown', (e) => {
       downPos = { x: e.clientX, y: e.clientY };
     });
 
     renderer.domElement.addEventListener('pointerup', (e) => {
       const moveDist = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
-      if (moveDist > 6) return; // カメラ回転ドラッグ時はクリック判定しない
+      if (moveDist > 6) return;
 
       const rect = renderer.domElement.getBoundingClientRect();
       pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -976,9 +1183,19 @@
       }
     });
 
-    // 詳細モーダルを開く関数
     const modal = document.getElementById('detail-modal');
+    const stampBtn = document.getElementById('m-stamp-btn');
     let selectedSpotId = null;
+
+    function updateModalStampButton(spotId) {
+      if (isStamped(spotId)) {
+        stampBtn.classList.add('stamped');
+        stampBtn.innerHTML = '✅ 踏破済み！（クリックで解除）';
+      } else {
+        stampBtn.classList.remove('stamped');
+        stampBtn.innerHTML = '💮 ここに行った！（スタンプを押す）';
+      }
+    }
 
     function selectSpot(spotId) {
       const entry = spotEntries.find((item) => item.data.id === spotId);
@@ -987,12 +1204,10 @@
       selectedSpotId = spotId;
       const d = entry.data;
 
-      // ラベルの選択状態更新
       spotEntries.forEach((item) => {
         item.labelEl.classList.toggle('selected', item.data.id === spotId);
       });
 
-      // モーダル内容をセット
       const tagEl = document.getElementById('m-tag');
       tagEl.textContent = d.rpgRole;
       tagEl.style.backgroundColor = d.tagColor;
@@ -1005,7 +1220,8 @@
       document.getElementById('m-address').textContent = d.address;
       document.getElementById('m-gmap').href = d.gmapUrl;
 
-      // YouTubeボタンの表示切り替え
+      updateModalStampButton(spotId);
+
       const ytBtn = document.getElementById('m-youtube');
       if (d.youtubeUrl && d.youtubeUrl.trim() !== "") {
         ytBtn.href = d.youtubeUrl;
@@ -1016,6 +1232,28 @@
 
       modal.classList.add('open');
     }
+
+    // スタンプ押印ボタンのクリック処理
+    stampBtn.addEventListener('click', () => {
+      if (!selectedSpotId) return;
+      const entry = spotEntries.find((item) => item.data.id === selectedSpotId);
+      if (!entry) return;
+
+      if (isStamped(selectedSpotId)) {
+        // スタンプ解除
+        stampedIds = stampedIds.filter((id) => id !== selectedSpotId);
+      } else {
+        // スタンプ獲得
+        stampedIds.push(selectedSpotId);
+        const isComplete = stampedIds.length === SPOTS_DATA.length;
+        showStampToast(entry.data.name, isComplete);
+      }
+
+      saveStamps();
+      updateStampProgressUI();
+      updateModalStampButton(selectedSpotId);
+      updateLabelAppearance(entry);
+    });
 
     // モーダルを閉じる
     document.getElementById('close-modal').addEventListener('click', () => {
@@ -1040,13 +1278,20 @@
 
         const cat = btn.dataset.category;
         spotEntries.forEach((entry) => {
-          const isMatch = cat === 'all' || entry.data.category === cat;
+          let isMatch = false;
+          if (cat === 'all') {
+            isMatch = true;
+          } else if (cat === 'stamped') {
+            isMatch = isStamped(entry.data.id);
+          } else {
+            isMatch = entry.data.category === cat;
+          }
+
           entry.visible = isMatch;
           entry.group.visible = isMatch;
           entry.labelEl.style.display = isMatch ? 'flex' : 'none';
         });
 
-        // 選択中のスポットが非表示になったらモーダルを閉じる
         if (selectedSpotId) {
           const current = spotEntries.find((i) => i.data.id === selectedSpotId);
           if (current && !current.visible) {
@@ -1069,14 +1314,13 @@
       requestAnimationFrame(animate);
       const elapsed = clock.getElapsedTime();
 
-      // クリスタルマーカーの回転と上下浮遊
       spotEntries.forEach((entry, idx) => {
         if (!entry.visible) return;
         const baseHeight = entry.data.category === 'base' ? 3.2 : 2.6;
         entry.crystal.rotation.y = elapsed * 2 + idx;
         entry.crystal.position.y = baseHeight + Math.sin(elapsed * 3 + idx) * 0.18;
 
-        // 選択中は足元の魔法陣を強調
+        // 選択中またはスタンプ済みは魔法陣リングを演出
         if (entry.data.id === selectedSpotId) {
           const scale = 1.15 + Math.sin(elapsed * 6) * 0.1;
           entry.ring.scale.set(scale, scale, 1);
@@ -1084,11 +1328,9 @@
           entry.ring.scale.set(1, 1, 1);
         }
 
-        // 3D空間上のクリスタル頭上位置を2Dスクリーン座標に変換してラベル追従
         tempV.set(entry.data.x, baseHeight + 0.7, entry.data.z);
         tempV.project(camera);
 
-        // カメラの後ろ側に回った場合は非表示
         if (tempV.z > 1) {
           entry.labelEl.style.display = 'none';
         } else {
@@ -1100,7 +1342,6 @@
         }
       });
 
-      // 温泉の湯気アニメーション
       steams.forEach((s) => {
         s.position.y += s.userData.speed;
         s.scale.setScalar(1 + Math.sin(elapsed * 2 + s.userData.offset) * 0.2);
@@ -1113,14 +1354,12 @@
       renderer.render(scene, camera);
     }
 
-    // ウィンドウリサイズ対応
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // 初回起動時に弟子屈高校を軽く紹介するか、マップ全体を見せる
     animate();
   </script>
 </body>
